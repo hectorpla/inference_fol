@@ -61,15 +61,28 @@ precedence = (
     ('right', 'NEGATE'),
 )
 
-# definitions of grammar tree nodes #
+# definitions of grammar tree nodes (might abstract further) #
+class Start: # start of a sentence
+    def __init__(self, left):
+        self.type = "start"
+        self.left = left # only one child, must be a predicate
+        self.right = None
+        self.op = "start"
+    
+    def nprint(self):
+        self.left.nprint()
+
 class NegateOp:
-    def __init__(self, child):
+    def __init__(self, left, parent=None):
         self.type = "negop"
-        self.child = child # only one child, must be a predicate
+        self.left = left # only one child, must be a predicate
+        self.right = None
+        self.op = "~"
+        self.parent = parent
         
     def nprint(self):
         print('~(', end='')
-        self.child.nprint()
+        self.left.nprint()
         print(')', end='')
 
 class BinOp:
@@ -86,18 +99,14 @@ class BinOp:
         self.right.nprint()
         print(')', end='')
 
-class List():
-    def __init__(self, first_child):
-        self.type = "list"
-        self.children = []
-        self.children.append(first_child)
-
 class Predicate():
     def __init__(self, name, children=None):
          self.type = "pred"
          self.name = name
          if children: self.children = children
          else: self.children = [ ]
+         self.op = "pred"
+         
     def nprint(self):
         print('[' + self.name + ': ', end='')
         for child in self.children:
@@ -106,6 +115,11 @@ class Predicate():
         print('%c' % 8, end='')
         print(']', end='')
         
+class List():
+    def __init__(self, first_child):
+        self.type = "list"
+        self.children = []
+        self.children.append(first_child)
 
 class Variable():
     def __init__(self, value):
@@ -171,8 +185,65 @@ def p_error(p):
         print("Syntax error at EOF")
 
 # Conversion to CNF #
+def elim_implication(root):
+    if root.type == "pred":
+        return
+    if root.op == '=>':
+        left, right = root.left, root.right
+        root.left = NegateOp(left, root)
+        root.op = '|'
+        elim_implication(left)
+        elim_implication(right)
+    else:
+        if root.left: 
+            elim_implication(root.left)
+        if root.right:
+            elim_implication(root.right)    
+
+#
+# during parsing time, a negation node does not
+# know who is its parent
+#
+def populate_parent(root): # for negation nodes
+    if root.type == "pred":
+        return
+    left, right = root.left, root.right
+    if left:
+        if left.op == '~':
+            left.parent = root
+        populate_parent(left)
+    if right:
+        if right.op == '~':
+            right.parent = root
+        populate_parent(right)
+        
+
+def push_negation_inward(root):
+    if root.type == "pred":
+        return
+    if root.op == '~':
+        child = root.left
+        parent = root.parent
+        
+        if child.op == '~':
+            if parent.left == root: parent.left = child.left
+            else: parent.right = child.left
+            child.left.parent = parent
+            push_negation_inward(child.left)
+        #if child.op == '&':
+    else:
+        if root.left:
+            push_negation_inward(root.left)
+        if root.right:
+            push_negation_inward(root.right)
 
 # Utilities #
+# a wrapper for yacc.parse()
+def parse_sentence(s):
+    ret = Start(yacc.parse(line))
+    populate_parent(ret)
+    return ret
+
 def printTree(root):
     root.nprint()
 
@@ -187,10 +258,18 @@ B(John,Bob)
 (D(x,y) & F(y)) => C(x,y)
 D(John,Alice)'''
 
+ss = '''(A(x) & B(x))
+((A(x) & B(x)) => C(x))
+(~A(x))
+A(x)
+(~(~(~(~A(x)))))'''
+
 lines = s.splitlines()
 
 for line in lines:
-    t = yacc.parse(line)
+    t = parse_sentence(line)
     # print(type(t))
+    elim_implication(t)
+    push_negation_inward(t)
     printTree(t)
     print()
