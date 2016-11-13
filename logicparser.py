@@ -1,9 +1,11 @@
+########################### lex ###########################
+
 tokens = (
     'PREDICATE','CONSTANT', 'VARIABLE', 'IMPLIES', 'COMMA', 'LPAREN', 'RPAREN',
     'NEGATE', 'AND', 'OR'
 )
 
-literals = ['&', '|', '~', '(', ')'] # must be single character
+# literals = ['&', '|', '~', '(', ')'] # must be single character
 
 # Tokens
 
@@ -21,7 +23,7 @@ t_OR = r'\|'
 
 
 def t_PREDICATE(t):
-    r'[A-Z][a-z]*\('
+    r'[A-Z][a-zA-Z]*\('
     return t
 
 t_ignore = " \t"
@@ -50,10 +52,9 @@ lexer = lex.lex()
 # for tok in lexer:
 #     print(tok)
 
-############################# yacc ###########################
+########################### yacc ###########################
 
 # Parsing rules
-
 precedence = (
     ('left', 'IMPLIES'),
     ('left', 'OR'),
@@ -266,9 +267,11 @@ def parse_sentence(s):
 def printTree(root):
     root.nprint()
 
+# construct parser
 import ply.yacc as yacc
 yacc.yacc()
 
+########################### Tests ###########################
 s = '''A(x) => H(x)
 D(x,y) => ~H(y)
 B(x,y) & C(x,y) => A(x)
@@ -283,7 +286,23 @@ ss = '''(A(x) & B(x))
 A(x)
 (~(~(~(~A(x)))))'''
 
-lines = s.splitlines()
+m = '''Mother(Liz,Charley)
+Father(Charley,Billy)
+~Mother(x,y) | Parent(x,y)
+~Father(x,y) | Parent(x,y)
+~Parent(x,y) | Ancestor(x,y)
+~(Parent(x,y) & Ancestor(y,z)) | Ancestor(x,z)'''
+
+d = '''Dog(D)
+       Owns(Jack,D)
+       Dog(y) & Owns(x,y) => AnimalLover(x)
+       ~(AnimalLover(x) & Animal(y) & Kills(x,y))
+       Kills(Jack,Tuna) | Kills(Curiosity,Tuna)
+       Cat(Tuna)
+       Cat(x)   => Animal(x)
+       ~Kills(Curiosity, Tuna) '''
+
+lines = d.splitlines()
 
 for line in lines:
     t = parse_sentence(line)
