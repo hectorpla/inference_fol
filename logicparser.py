@@ -142,11 +142,17 @@ def p_sentence_binop(p):
                 | sentence OR sentence
                 | sentence IMPLIES sentence
     '''
-    p[0] = BinOp(p[1], p[2], p[3])
+    if p[2] == '=>':
+        p[0] = BinOp(NegateOp(p[1]), '|', p[3])
+    else :
+        p[0] = BinOp(p[1], p[2], p[3])
 
 def p_sentence_negation(p):
     "sentence : NEGATE sentence"
-    p[0] = NegateOp(p[2])
+    if p[2].op == '~':
+        p[0] = p[2].left
+    else:
+        p[0] = NegateOp(p[2])
 
 def p_sentence_group(p):
     "sentence : LPAREN sentence RPAREN"
@@ -184,8 +190,8 @@ def p_error(p):
     else:
         print("Syntax error at EOF")
 
-# Conversion to CNF #
-def elim_implication(root):
+############################## Conversion to CNF ##############################
+def elim_implication(root): # not necessary
     if root.type == "pred":
         return
     if root.op == '=>':
@@ -226,18 +232,31 @@ def push_negation_inward(root):
         parent = root.parent
         
         if child.op == '~':
-            if parent.left == root: parent.left = child.left
-            else: parent.right = child.left
+            if parent.left == root:
+                parent.left = child.left
+            else: 
+                parent.right = child.left
             child.left.parent = parent
             push_negation_inward(child.left)
-        #if child.op == '&':
+        if child.op == '&' or child.op == '|':
+            child.left = NegateOp(child.left, child)
+            child.right = NegateOp(child.right, child)          
+            if child.op == '&':
+                child.op = '|'
+            elif child.op == '|':
+                child.op = '&'
+            if parent.left == root: # cancel out the negation (middle level)
+                parent.left = child
+            else: 
+                parent.right = child
+            push_negation_inward(child.left), push_negation_inward(child.right)
     else:
         if root.left:
             push_negation_inward(root.left)
         if root.right:
             push_negation_inward(root.right)
 
-# Utilities #
+########################### Utilities ###########################
 # a wrapper for yacc.parse()
 def parse_sentence(s):
     ret = Start(yacc.parse(line))
@@ -269,7 +288,7 @@ lines = s.splitlines()
 for line in lines:
     t = parse_sentence(line)
     # print(type(t))
-    elim_implication(t)
+#     elim_implication(t)
     push_negation_inward(t)
     printTree(t)
     print()
