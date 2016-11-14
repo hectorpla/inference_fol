@@ -250,7 +250,11 @@ def push_negation_inward(root):
 # (~A(x) | ~B(x)) & (~A(x) | ~C(x))
 # no longer necessary to keep track of parent of negations though inconsistent
 ##
+import itertools
+counter = itertools.count()
 def distribute_or(root):
+#     print('Distribute Or Called: ' + str(next(counter))) 
+    
     if root.type == "pred":
         return
     
@@ -275,9 +279,6 @@ def distribute_or(root):
             parent.left = new_and
         else: parent.right = new_and
         distribute_or(l_and), distribute_or(r_and) # check new children again
-        print("here3:")
-        new_and.nprint()
-        print()
     
 ########################### Utilities ###########################
 # a wrapper for yacc.parse()
@@ -326,8 +327,12 @@ d = '''Dog(D)
        Cat(x)   => Animal(x)
        ~Kills(Curiosity, Tuna) '''
 
+w = ''' (A(x) => B(x)) & (B(x) => C(x)) '''
+
+# test cases for or distribution
 v = ''' ~(A(x) & B(x) | C(x))
-        ~(A(x) & (B(x) | C(x)))'''
+        ~(A(x) & (B(x) | C(x)))
+        ~((A(x) | D(x)) & (B(x) | C(x)))'''
 
 lines = v.splitlines()
 
