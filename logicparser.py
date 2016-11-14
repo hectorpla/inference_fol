@@ -87,11 +87,12 @@ class NegateOp:
         print(')', end='')
 
 class BinOp:
-    def __init__(self,left,op,right):
+    def __init__(self,left,op,right, parent=None):
         self.type = "binop"
         self.left = left
         self.right = right
         self.op = op
+        self.parent = parent
         
     def nprint(self):
         print(self.op + '(', end='')
@@ -192,21 +193,6 @@ def p_error(p):
         print("Syntax error at EOF")
 
 ############################## Conversion to CNF ##############################
-def elim_implication(root): # not necessary
-    if root.type == "pred":
-        return
-    if root.op == '=>':
-        left, right = root.left, root.right
-        root.left = NegateOp(left, root)
-        root.op = '|'
-        elim_implication(left)
-        elim_implication(right)
-    else:
-        if root.left: 
-            elim_implication(root.left)
-        if root.right:
-            elim_implication(root.right)    
-
 #
 # during parsing time, a negation node does not
 # know who is its parent
@@ -216,12 +202,12 @@ def populate_parent(root): # for negation nodes
         return
     left, right = root.left, root.right
     if left:
-        if left.op == '~':
-            left.parent = root
+        # if left.op == '~':
+        left.parent = root
         populate_parent(left)
     if right:
-        if right.op == '~':
-            right.parent = root
+        # if right.op == '~':
+        right.parent = root
         populate_parent(right)
         
 
@@ -246,6 +232,7 @@ def push_negation_inward(root):
                 child.op = '|'
             elif child.op == '|':
                 child.op = '&'
+            child.parent = parent # update parent of '&' or '|'
             if parent.left == root: # cancel out the negation (middle level)
                 parent.left = child
             else: 
@@ -257,11 +244,48 @@ def push_negation_inward(root):
         if root.right:
             push_negation_inward(root.right)
 
+##
+# distribute 'or' into 'and'
+# ~(A(x) & (B(x) | C(x))) should be converted into
+# (~A(x) | ~B(x)) & (~A(x) | ~C(x))
+# no longer necessary to keep track of parent of negations though inconsistent
+##
+def distribute_or(root):
+    if root.type == "pred":
+        return
+    
+    if root.left:
+        distribute_or(root.left)
+    if root.right:
+        distribute_or(root.right)
+    
+    # complexity might be very bad
+    if root.op == '|' and (root.left.op == '&' or root.right.op == '&'): 
+        parent = root.parent
+        # left and right child of root
+        left, right = root.left, root.right
+        
+        if left.op == '&':
+            l_and, r_and = BinOp(left.left, '|', right), BinOp(left.right, '|', right)
+        elif right.op == '&':
+            l_and, r_and = BinOp(right.left, '|', left), BinOp(right.right, '|', left)
+        new_and = BinOp(l_and, '&', r_and, parent) # parent of new node be parent of '|'
+        l_and.parent = r_and.parent = new_and # set parent for two new '|'
+        if parent.left == root:
+            parent.left = new_and
+        else: parent.right = new_and
+        distribute_or(l_and), distribute_or(r_and) # check new children again
+        print("here3:")
+        new_and.nprint()
+        print()
+    
 ########################### Utilities ###########################
 # a wrapper for yacc.parse()
-def parse_sentence(s):
+def parse_sentence(line):
     ret = Start(yacc.parse(line))
     populate_parent(ret)
+    push_negation_inward(ret)
+    distribute_or(ret)
     return ret
 
 def printTree(root):
@@ -302,12 +326,13 @@ d = '''Dog(D)
        Cat(x)   => Animal(x)
        ~Kills(Curiosity, Tuna) '''
 
-lines = d.splitlines()
+v = ''' ~(A(x) & B(x) | C(x))
+        ~(A(x) & (B(x) | C(x)))'''
+
+lines = v.splitlines()
 
 for line in lines:
     t = parse_sentence(line)
     # print(type(t))
-#     elim_implication(t)
-    push_negation_inward(t)
     printTree(t)
     print()
