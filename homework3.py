@@ -1,7 +1,7 @@
 ########################### KB's data structure ###########################
 # a link in a clause (different from that in the parser)
 class Predicate:
-    __init__(self, name, args):
+    def __init__(self, name, args):
         self.name = name
         self.args = args
         self.next = None
@@ -37,16 +37,19 @@ def seperate_clauses(root):
 def convert_pred(node):
     if node.type == 'negop':
         pred_node = node.left
-        ret = Predicate('-' + pred_node.name, pred_node.children, True)
+        ret = Predicate('-' + pred_node.name, pred_node.children)
     else:
-        ret = Predicate(node.name, node.children, False)
+        # print('hey')
+        ret = Predicate(node.name, node.children)
     return ret
 
 # convert a clause to a linkedlist that will be stored in the KB
 def convert_clause(clause_root):
-    head = None, cur = None
+    head = None
+    cur = None
     nodeq = []
     
+    nodeq.append(clause_root)
     while nodeq:
         node = nodeq.pop()
         if node.op == '|':
@@ -65,16 +68,22 @@ def convert_clause(clause_root):
 # tell a KB a sentence of FOL
 def tell(kb, line):
     start = lp.parse_sentence(line)
-    clauses = seperate_clauses(start->left)
+    clauses = seperate_clauses(start.left)
     for clause_t in clauses:
-        clause_l = convert_clause(clause_t)
+        print("tell clause : ")
+        clause_t.nprint()
+        print()
+        
+        clause_l = convert_clause(clause_t)        
         print_clause(clause_l)
+        print()
         
     
 ########################### Utilites ###########################
 def print_clause(head):
     while head:
-        head.print(), print ( '(' + id(head) + ') -> ', end='' )
+        head.print(), print ( '(' + str(id(head) % 1000) + ') -> ', end='' )
+        head = head.next
     print('null')
 
 ########################### main ###########################

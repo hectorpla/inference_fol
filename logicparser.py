@@ -334,10 +334,10 @@ v = ''' ~(A(x) & B(x) | C(x))
         ~(A(x) & (B(x) | C(x)))
         ~((A(x) | D(x)) & (B(x) | C(x)))'''
 
-lines = v.splitlines()
-
-for line in lines:
-    t = parse_sentence(line)
-    # print(type(t))
-    printTree(t)
-    print()
+# lines = v.splitlines()
+# 
+# for line in lines:
+#     t = parse_sentence(line)
+#     # print(type(t))
+#     printTree(t)
+#     print()
