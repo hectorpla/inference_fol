@@ -99,10 +99,14 @@ def tell(kb, line):
 ########################### Uinification ###########################
 def unify(x, y, s):
     if s is None:
+        # test out put
+        print('unification failed')
         return None
     elif x is y: # point to the same object (a wrapper around a string)
         return s
     elif isinstance(x, list):
+        assert isinstance(y, list)
+        assert len(x) == len(y)
         if len(x) == 1:
             return unify(x[0], y[0], s)
         else:
@@ -139,8 +143,8 @@ def print_clause(head):
 def print_subst(s):
     print('{ ', end='')
     for var, val in s.items():
-        assert var.type == 'var'
-        assert val.type == 'const'
+        # assert var.type == 'var'
+#         assert val.type == 'const'
         print(var.value + '/' + val.value + ', ', end='')
     print('%c%c }' % (8, 8))
 ########################### main ###########################

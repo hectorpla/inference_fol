@@ -5,7 +5,9 @@ w = ''' Bird(x)
         Mother(x,y)
         Mother(Salsa,John) 
         Love(x, Rose)
-        Love(Jack,y)'''
+        Love(Jack,y)
+        Sells(Bob, x)
+        Sells(x, coke)'''
         
 lines = w.splitlines()
 
@@ -24,9 +26,13 @@ for line in lines:
 l = [cl.next.args for cl in cls]
 # print(l)
 
-sub = hw3.unify(l[0],l[1], {})
-hw3.print_subst(sub)
-sub = hw3.unify(l[2],l[3], {})
-hw3.print_subst(sub)
-sub = hw3.unify(l[4],l[5], {})
-hw3.print_subst(sub)
+# sub = hw3.unify(l[0],l[1], {})
+# hw3.print_subst(sub)
+# sub = hw3.unify(l[2],l[3], {})
+# hw3.print_subst(sub)
+# sub = hw3.unify(l[4],l[5], {})
+# hw3.print_subst(sub)
+
+for i in range(0, len(cls), 2):
+    sub = hw3.unify(l[i],l[i+1], {})
+    hw3.print_subst(sub)
