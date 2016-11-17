@@ -41,16 +41,17 @@ def t_error(t):
 # Build the lexer
 import ply.lex as lex
 lexer = lex.lex()
-
+# tests
 # sentences = ''' D(x,y) => ~H(y)
 #                 B(x,y) & C(x,y) => A(x)
 #                 D(John,Bob)
 #                 ~Mother(x,y) | Parent(x,y) '''
-# 
-# lex.input(sentences)
+#
 
+# lex.input(w)
+# 
 # for tok in lexer:
-#     print(tok)
+#      print(tok)
 
 ########################### yacc ###########################
 
@@ -182,11 +183,11 @@ def p_term_list(p):
 
 def p_term_constant(p):
     "term : CONSTANT"
-    p[0] = Variable(p[1])
+    p[0] = Constant(p[1])
 
 def p_term_variable(p):
     "term : VARIABLE"
-    p[0] = Constant(p[1])
+    p[0] = Variable(p[1])
 
 def p_error(p):
     if p:
