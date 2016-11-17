@@ -123,6 +123,8 @@ class List():
         self.children = []
         self.children.append(first_child)
 
+# both the following classes are nearly not relavent to
+# to the parsing tree, and are stored directly to the KB
 class Variable():
     def __init__(self, value):
         self.type = "var"
