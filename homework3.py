@@ -126,9 +126,44 @@ def unify_var(var, x, s):
     else:
         s[var] = x
         return s
+
+# def std_var_in_clause(clause, name_gen, map):
+#     assert isinstance(clause, Clause)
+#     
+#     cur = clause.next
+#     while cur:
+#         std_var_in_pred(cur, name_gen, map)
+#     
+# 
+# def std_var_in_pred(pred, name_gen, map):
+#     assert isinstance(pred, Predicate)
+#     
+#     l = pred.args
+#     for i in range(len(l)):
+#         if l[i].type == 'var':
+#             if l[i] not in map:
+#                 map[l[i].value] = next(name_gen)
+#             l[i].value = map[l[i].value]
     
     
 ########################### Utilites ###########################
+def var_name_generator():
+    name_tab = ['x', 'y', 'z', 'w', 'p', 'q']
+    counter = itertools.count(1)
+    
+    while True:
+        num = next(counter)
+        stack = []
+        name = ''
+
+        while num:
+            num -= 1
+            stack.append(name_tab[num % 6])
+            num //= 6  
+        while len(stack):
+            name += stack.pop()     
+        yield name
+
 def print_clause(head):
     assert isinstance(head, Clause)
     head.print()
