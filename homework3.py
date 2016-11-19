@@ -1,3 +1,9 @@
+import argparse
+DEBUG = False
+cmdparser = argparse.ArgumentParser(description='Command Parser')
+cmdparser.add_argument('-d', action='store_true', default=False)
+args = cmdparser.parse_args()
+DEBUG = args.d
 ########################### KB's data structure ###########################
 import itertools
 counter = itertools.count()
@@ -22,7 +28,7 @@ class Predicate:
     def print(self):
         print('[' + self.name + ': ', end='')
         for child in self.args:
-            child.nprint(), print(' ', end='')
+            child.nprint(DEBUG), print(' ', end='')
         print('%c]' % 8, end='')
 
 ##
@@ -97,6 +103,12 @@ def tell(kb, line):
 
             
     return clause_l # an interface to test
+
+# due to specified form of the queries
+# directly return the Predicate
+def parse_query(line):
+    start = lp.parse_sentence(line)
+    return convert_to_pred(start.left)
             
 ########################### Uinification ###########################
 def unify(x, y, s):
@@ -154,7 +166,10 @@ def std_var_in_pred(pred, name_gen, map):
                 map[l[i].value] = next(name_gen)
             l[i].value = map[l[i].value]
     
+########################### Resolution ###########################
+# def resolution(kb, a):
     
+
 ########################### Utilites ###########################
 def var_name_generator():
     name_tab = ['x', 'y', 'z', 'w', 'p', 'q']
@@ -194,6 +209,10 @@ def print_subst(s):
             print(var.value + '/' + val.value + ', ', end='')
         print('%c%c }' % (8, 8))
     else: print('{ }')
+    
+def parse_KB(kb, lines):
+    for line in lines:
+        tell(kb, line)
 ########################### main ###########################
 
 w = ''' (A(x) => B(x)) & (B(x) => C(x)) '''
@@ -209,12 +228,21 @@ q = '''A      (Bo      b)
        (A(x, y)    =     > B    (   z))
        Mo      t   her(x,y)'''
 
-lines = q.splitlines()
+# lines = q.splitlines()
+# 
+# for line in lines:
+#     l = line.replace(' ', '')
+#     tell(KB, l)
 
-for line in lines:
-    l = line.replace(' ', '')
-    tell(KB, l)
+with open('input.txt', 'r') as f:
+    lines = f.read().splitlines()
     
+    num_query = int(lines[0])
+    num_kb = int(lines[num_query + 1])
+    kb_start = num_query + 2
+    
+    parse_KB(KB, lines[kb_start:kb_start+num_kb])
+
 for k, v in KB.items():
     print ('PREDICATE: ' + k)
     for pred in v:
@@ -222,11 +250,4 @@ for k, v in KB.items():
     print()
 
 
-# with open('input.txt', 'r') as f:
-#     lines = f.read().splitlines()
-# 
-#     for line in lines:
-#         t = lp.parse_sentence(line)
-#         lp.printTree(t)
-#         print()
 
