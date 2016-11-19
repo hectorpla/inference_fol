@@ -83,6 +83,7 @@ def convert_to_clause_list(clause_root):
                     
 # tell a KB a sentence of FOL
 def tell(kb, line):
+    line = line.replace(' ', '')
     start = lp.parse_sentence(line)
     clauses = seperate_clauses(start.left)
     for clause_t in clauses:
@@ -107,6 +108,7 @@ def tell(kb, line):
 # due to specified form of the queries
 # directly return the Predicate
 def parse_query(line):
+    line = line.replace(' ', '')
     start = lp.parse_sentence(line)
     return convert_to_pred(start.left)
             
@@ -156,18 +158,34 @@ def std_var_in_clause(clause, name_gen, map):
         cur = cur.next
     
 
+# map: variable name(string) to variable object, 
+# for example: 'a' -> Variable('x')
 def std_var_in_pred(pred, name_gen, map):
     assert isinstance(pred, Predicate)
     
     l = pred.args
     for i in range(len(l)):
         if l[i].type == 'var':
-            if l[i] not in map:
-                map[l[i].value] = next(name_gen)
-            l[i].value = map[l[i].value]
+            if l[i].value not in map:               
+                map[l[i].value] = l[i]
+                print('std var: new pair added ', map)
+                l[i].value = next(name_gen)
+            else: 
+                l[i] = map[l[i].value]
     
 ########################### Resolution ###########################
-# def resolution(kb, a):
+def resolution(kb, a):
+    na = negate_name(a.name)
+    for pred in kb[na]:
+        print_clause(pred.head)
+        sub = unify(a.args, pred.args, {})
+        print_subst(sub)
+    
+def negate_name(name):
+    if name[0] == '-':
+        return name[1:]
+    else:
+        return '-' + name
     
 
 ########################### Utilites ###########################
@@ -179,7 +197,6 @@ def var_name_generator():
         num = next(counter)
         stack = []
         name = ''
-
         while num:
             num -= 1
             stack.append(name_tab[num % 6])
@@ -195,24 +212,37 @@ def print_clause(head):
     while head:
         head.print()
         print('<c' + str(head.head.num) + '>', end='')
-        print ( '(' + str(id(head) % 1000) + ') -> ', end='' )
+        if DEBUG:
+            print ( '(' + str(id(head) % 1000) + ')', end='' )
+        print (' -> ',end='')
         head = head.next
     print('null')
 
 def print_subst(s):
-    assert isinstance(s, dict)
+    # assert isinstance(s, dict)
+    if s is None:
+        print('Not such substitution')
+        return
     if s:
         print('{ ', end='')
         for var, val in s.items():
             # assert var.type == 'var'
-    #         assert val.type == 'const'
+#             assert val.type == 'const'
             print(var.value + '/' + val.value + ', ', end='')
         print('%c%c }' % (8, 8))
     else: print('{ }')
-    
+
+def traver_kb(kb):
+    for k, v in kb.items():
+        print ('PREDICATE: ' + k)
+        for pred in v:
+            print_clause(pred.head)
+        print()
+
 def parse_KB(kb, lines):
     for line in lines:
         tell(kb, line)
+    
 ########################### main ###########################
 
 w = ''' (A(x) => B(x)) & (B(x) => C(x)) '''
@@ -234,20 +264,26 @@ q = '''A      (Bo      b)
 #     l = line.replace(' ', '')
 #     tell(KB, l)
 
-with open('input.txt', 'r') as f:
-    lines = f.read().splitlines()
+# with open('input.txt', 'r') as f:
+#     lines = f.read().splitlines()
+#     
+#     num_query = int(lines[0])
+#     num_kb = int(lines[num_query + 1])
+#     kb_start = num_query + 2
+#     
+#     parse_KB(KB, lines[kb_start:kb_start+num_kb])
+#     
+# #     traver_kb(KB)
+#     
+#     for query_line in lines[1:num_query + 1]:
+#         query = parse_query(query_line)
+#         query.print()
+#         print(':')
+#         resolution(KB,query)
+#         print()
     
-    num_query = int(lines[0])
-    num_kb = int(lines[num_query + 1])
-    kb_start = num_query + 2
-    
-    parse_KB(KB, lines[kb_start:kb_start+num_kb])
 
-for k, v in KB.items():
-    print ('PREDICATE: ' + k)
-    for pred in v:
-        print_clause(pred.head)
-    print()
+
 
 
 

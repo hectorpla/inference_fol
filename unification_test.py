@@ -25,17 +25,21 @@ def std_var_in_clause(clause, name_gen, map):
     while cur:
         std_var_in_pred(cur, name_gen, map)
         cur = cur.next
-    
 
+# map: variable name(string) to variable object, 
+# for example: 'a' -> Variable('x')
 def std_var_in_pred(pred, name_gen, map):
     assert isinstance(pred, hw3.Predicate)
     
     l = pred.args
     for i in range(len(l)):
         if l[i].type == 'var':
-            if l[i] not in map:
-                map[l[i].value] = next(name_gen)
-            l[i].value = map[l[i].value]
+            if l[i].value not in map:               
+                map[l[i].value] = l[i]
+                print('std var: new pair added ', map)
+                l[i].value = next(name_gen)
+            else: 
+                l[i] = map[l[i].value]
 
 w = ''' Bird(x)
         Bird(Kak)
@@ -60,12 +64,19 @@ p = '''Tall(Bob)
        Fakes(Tony, Gold)
        Fakes(x, Gold)'''
 
+# can't unify
 e = ''' K(A)
         K(B)
         K(B,C)
         K(M,N)'''
 
-lines = e.splitlines()
+# compound clause
+o = ''' A(x) | B(x)
+        B(David)
+        D(y) | C(x,y)
+        C(x, Wenger)'''
+
+lines = o.splitlines()
 
 cls = []
 
@@ -87,5 +98,6 @@ for i in range(0, len(cls), 2):
     hw3.print_clause(cls[i])
     std_var_in_clause(cls[i+1], var_name_gen, {})
     hw3.print_clause(cls[i+1])
+    
     sub = hw3.unify(l[i],l[i+1], {})
     hw3.print_subst(sub)
