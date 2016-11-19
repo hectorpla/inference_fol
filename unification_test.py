@@ -44,10 +44,28 @@ w = ''' Bird(x)
         Love(x, Rose)
         Love(Jack,y)
         '''
+# variable standardization
 q = '''Sells(Bob, x)
-       Sells(x, Coke)'''
+       Sells(x, Coke)
+       Kicks(a, Football)
+       Kicks(Even, a)
+       Beats(Donnie, x, y, z)
+       Beats(x, Kimura, Santos, Clinton)
+       A(x, y, z)
+       A(y, x, Bob)'''
 
-lines = q.splitlines()
+# between constant
+p = '''Tall(Bob)
+       Tall(Bob)
+       Fakes(Tony, Gold)
+       Fakes(x, Gold)'''
+
+e = ''' K(A)
+        K(B)
+        K(B,C)
+        K(M,N)'''
+
+lines = e.splitlines()
 
 cls = []
 
@@ -61,8 +79,9 @@ for line in lines:
 
 l = [cl.next.args for cl in cls]
 
-print ('\nunification: ')
+
 for i in range(0, len(cls), 2):
+    print ('\nunification: ')
     var_name_gen = var_name_generator()
     std_var_in_clause(cls[i], var_name_gen, {})
     hw3.print_clause(cls[i])

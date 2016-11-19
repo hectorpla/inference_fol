@@ -131,14 +131,17 @@ class Variable():
         self.type = "var"
         self.value = value
     def nprint(self):
-        print(self.value, end='')
+#         print(self.value, end='')
+        print(self.value + '<' + str(id(self)%1000) + '>', end='')
+        
         
 class Constant():
     def __init__(self, value):
         self.type = "const"
         self.value = value
     def nprint(self):
-        print(self.value, end='')
+#         print(self.value, end='')
+        print(self.value + '<' + str(id(self)%1000) + '>', end='')
 
 
 # grammar rules #

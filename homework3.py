@@ -52,13 +52,12 @@ def convert_to_pred(node):
         pred_node = node.left
         ret = Predicate('-' + pred_node.name, pred_node.children)
     else:
-        # print('hey')
         ret = Predicate(node.name, node.children)
     return ret
 
 # convert a clause (in tree structure) to a linked list 
 # that will be stored in the KB
-def convert_to_clause(clause_root):
+def convert_to_clause_list(clause_root):
     head = Clause()
     cur = head
     nodeq = []
@@ -85,22 +84,23 @@ def tell(kb, line):
 #         clause_t.nprint()
 #         print()
         
-        clause_l = convert_to_clause(clause_t)        
+        clause_l = convert_to_clause_list(clause_t)        
         # print_clause(clause_l)
 #         print()
         # store in KB
-        # cur = clause_l
-#         while cur:
-#             if cur.name not in kb:
-#                 kb[cur.name] = []
-#             kb[cur.name].append(cur)
+        cur = clause_l.next
+        while cur:
+            if cur.name not in kb:
+                kb[cur.name] = []
+            kb[cur.name].append(cur)
+            cur = cur.next
+
+            
     return clause_l # an interface to test
             
 ########################### Uinification ###########################
 def unify(x, y, s):
     if s is None:
-        # test out put
-        print('unification failed')
         return None
     elif x is y: # point to the same object (a wrapper around a string)
         return s
@@ -115,6 +115,13 @@ def unify(x, y, s):
         return unify_var(x, y, s)
     elif y.type == 'var':
         return unify_var(y, x, s)
+    # constant unify with constant
+    elif x.type == 'const':
+        if x.value == y.value:
+            return s
+        else:
+            print('different contants: unification failed')
+            return None
     else:
         return None
 
@@ -123,27 +130,29 @@ def unify_var(var, x, s):
         return unify(s[var], x, s)
     elif x in s:
         return unify(var, s[var], s)
+    # can a variable be unified with another variable
     else:
         s[var] = x
         return s
 
-# def std_var_in_clause(clause, name_gen, map):
-#     assert isinstance(clause, Clause)
-#     
-#     cur = clause.next
-#     while cur:
-#         std_var_in_pred(cur, name_gen, map)
-#     
-# 
-# def std_var_in_pred(pred, name_gen, map):
-#     assert isinstance(pred, Predicate)
-#     
-#     l = pred.args
-#     for i in range(len(l)):
-#         if l[i].type == 'var':
-#             if l[i] not in map:
-#                 map[l[i].value] = next(name_gen)
-#             l[i].value = map[l[i].value]
+def std_var_in_clause(clause, name_gen, map):
+    assert isinstance(clause, Clause)
+    
+    cur = clause.next
+    while cur:
+        std_var_in_pred(cur, name_gen, map)
+        cur = cur.next
+    
+
+def std_var_in_pred(pred, name_gen, map):
+    assert isinstance(pred, Predicate)
+    
+    l = pred.args
+    for i in range(len(l)):
+        if l[i].type == 'var':
+            if l[i] not in map:
+                map[l[i].value] = next(name_gen)
+            l[i].value = map[l[i].value]
     
     
 ########################### Utilites ###########################
@@ -176,12 +185,15 @@ def print_clause(head):
     print('null')
 
 def print_subst(s):
-    print('{ ', end='')
-    for var, val in s.items():
-        # assert var.type == 'var'
-#         assert val.type == 'const'
-        print(var.value + '/' + val.value + ', ', end='')
-    print('%c%c }' % (8, 8))
+    assert isinstance(s, dict)
+    if s:
+        print('{ ', end='')
+        for var, val in s.items():
+            # assert var.type == 'var'
+    #         assert val.type == 'const'
+            print(var.value + '/' + val.value + ', ', end='')
+        print('%c%c }' % (8, 8))
+    else: print('{ }')
 ########################### main ###########################
 
 w = ''' (A(x) => B(x)) & (B(x) => C(x)) '''
@@ -197,12 +209,17 @@ q = '''A      (Bo      b)
        (A(x, y)    =     > B    (   z))
        Mo      t   her(x,y)'''
 
-# lines = q.splitlines()
-# 
-# for line in lines:
-#     l = line.replace(' ', '')
-#     print(l)
-#     tell(KB, l)
+lines = q.splitlines()
+
+for line in lines:
+    l = line.replace(' ', '')
+    tell(KB, l)
+    
+for k, v in KB.items():
+    print ('PREDICATE: ' + k)
+    for pred in v:
+        print_clause(pred.head)
+    print()
 
 
 # with open('input.txt', 'r') as f:
