@@ -5,6 +5,7 @@ cmdparser.add_argument('-d', action='store_true', default=False)
 args = cmdparser.parse_args()
 DEBUG = args.d
 ########################### KB's data structure ###########################
+import copy
 import itertools
 counter = itertools.count()
 # head of a clause in the KB
@@ -13,17 +14,55 @@ class Clause:
         self.num = next(counter)
         self.next = None
     
+    def copy(self):
+        head = copy.copy(self)
+        cur = head
+        cur_origin = self.next
+        while cur_origin:
+            cur_origin.print()
+            temp = cur
+            cur = cur_origin.copy()
+            cur.prev, cur.head = temp, head
+            temp.next = cur
+            cur_origin = cur_origin.next
+        return head
+    
+    def merge_clause(self, rhs):
+        assert isinstance(rhs, Clause)
+        
+        cur, tail = self, None
+        while cur:
+            tail, cur = cur, cur.next
+        tail.next = rhs.next   
+        rhs.next.prev = tail 
+    
     def print(self):
         print('CLAUSE ' + str(self.num) + ": ", end='')
     
 
 # a link in a clause (different from that in the parser)
 class Predicate:
-    def __init__(self, name, args):
+    def __init__(self, name, args, prev):
         self.name = name
         self.args = args
+        self.prev = prev
         self.head = None
         self.next = None
+    
+    def copy(self):
+        new_args = []
+        for arg in self.args:
+            if arg.type == 'var': # variables are new copies
+                new_args.append(copy.copy(arg))
+            else: # constants are always the same object
+                new_args.append(arg)
+        return Predicate(self.name, new_args, None)
+    
+    # remove itself from the clause
+    def remove_self(self):
+        self.prev.next = self.next
+        if self.next:
+            self.next.prev = self.prev
     
     def print(self):
         print('[' + self.name + ': ', end='')
@@ -53,12 +92,12 @@ def seperate_clauses(root):
     return clauses            
 
 # convert a predicate/negation node to a Predicate object
-def convert_to_pred(node):
+def convert_to_pred(node, prev):
     if node.type == 'negop':
         pred_node = node.left
-        ret = Predicate('-' + pred_node.name, pred_node.children)
+        ret = Predicate('-' + pred_node.name, pred_node.children, prev)
     else:
-        ret = Predicate(node.name, node.children)
+        ret = Predicate(node.name, node.children, prev)
     return ret
 
 # convert a clause (in tree structure) to a linked list 
@@ -76,7 +115,7 @@ def convert_to_clause_list(clause_root):
             nodeq.append(node.right)
         else:
             temp = cur
-            cur = convert_to_pred(node)
+            cur = convert_to_pred(node, temp)
             cur.head = head
             temp.next = cur
     return head
@@ -110,7 +149,7 @@ def tell(kb, line):
 def parse_query(line):
     line = line.replace(' ', '')
     start = lp.parse_sentence(line)
-    return convert_to_pred(start.left)
+    return convert_to_pred(start.left, None)
             
 ########################### Uinification ###########################
 def unify(x, y, s):
@@ -151,7 +190,7 @@ def unify_var(var, x, s):
 
 def std_var_in_clause(clause, name_gen, map):
     assert isinstance(clause, Clause)
-    
+       
     cur = clause.next
     while cur:
         std_var_in_pred(cur, name_gen, map)
@@ -162,7 +201,7 @@ def std_var_in_clause(clause, name_gen, map):
 # for example: 'a' -> Variable('x')
 def std_var_in_pred(pred, name_gen, map):
     assert isinstance(pred, Predicate)
-    
+        
     l = pred.args
     for i in range(len(l)):
         if l[i].type == 'var':
@@ -185,18 +224,25 @@ def subst(s, clause):
                 args[i] = s[args[i]]
         cur = cur.next
 ########################### Resolution ###########################
-def resolution(kb, a):
+def ask(kb, a):
     na = negate_name(a.name)
     for pred in kb[na]:
+        var_name_gen = var_name_generator()
+        std_var_in_clause(pred.head, var_name_gen, {})
         print_clause(pred.head)
         sub = unify(a.args, pred.args, {})
         print_subst(sub)
-    
+
 def negate_name(name):
     if name[0] == '-':
         return name[1:]
     else:
         return '-' + name
+
+# walk the clause through the kb
+# def resolution(kb, clause):
+    
+        
     
 
 ########################### Utilites ###########################
@@ -290,7 +336,7 @@ q = '''A      (Bo      b)
 #         query = parse_query(query_line)
 #         query.print()
 #         print(':')
-#         resolution(KB,query)
+#         ask(KB,query)
 #         print()
     
 
