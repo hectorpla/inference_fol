@@ -101,3 +101,7 @@ for i in range(0, len(cls), 2):
     
     sub = hw3.unify(l[i],l[i+1], {})
     hw3.print_subst(sub)
+    
+    hw3.subst(sub, cls[i])
+    print('after substitution')
+    hw3.print_clause(cls[i])

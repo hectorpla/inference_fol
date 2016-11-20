@@ -173,6 +173,17 @@ def std_var_in_pred(pred, name_gen, map):
             else: 
                 l[i] = map[l[i].value]
     
+def subst(s, clause):
+    assert isinstance(clause, Clause)
+    
+    cur = clause.next
+    while cur:
+        args = cur.args
+        for i in range(len(args)):
+            if args[i] in s:
+                assert args[i].type == 'var'
+                args[i] = s[args[i]]
+        cur = cur.next
 ########################### Resolution ###########################
 def resolution(kb, a):
     na = negate_name(a.name)
