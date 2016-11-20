@@ -343,6 +343,10 @@ v = ''' ~(A(x) & B(x) | C(x))
         ~(A(x) & (B(x) | C(x)))
         ~((A(x) | D(x)) & (B(x) | C(x)))'''
 
+q = '''A      (Bo      b)
+       (A(x, y)    =     > B    (   z))
+       Mo      t   her(x,y)'''
+
 # lines = v.splitlines()
 # 
 # for line in lines:

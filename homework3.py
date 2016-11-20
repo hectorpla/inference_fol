@@ -14,20 +14,23 @@ class Clause:
         self.num = next(counter)
         self.next = None
     
-    def copy(self):
-        head = copy.copy(self)
+    # common call: cl.copy(pred.head, pred)
+    def copy(self, pred=None):  
+        head = Clause()
         cur = head
         cur_origin = self.next
         while cur_origin:
-            cur_origin.print()
+#             cur_origin.print()
             temp = cur
             cur = cur_origin.copy()
+            if cur_origin is pred: # new copy of the specified predicate
+                pred = cur
             cur.prev, cur.head = temp, head
-            temp.next = cur
+            temp.next = cur  
             cur_origin = cur_origin.next
-        return head
+        return head, pred
     
-    def merge_clause(self, rhs):
+    def merge_with(self, rhs):
         assert isinstance(rhs, Clause)
         
         cur, tail = self, None
@@ -37,7 +40,10 @@ class Clause:
         rhs.next.prev = tail 
     
     def print(self):
-        print('CLAUSE ' + str(self.num) + ": ", end='')
+        print('CLAUSE ' + str(self.num) , end='')
+        if DEBUG:
+            print('<' + str(id(self) % 1000) + '>', end='')
+        print(": ", end='')
     
 
 # a link in a clause (different from that in the parser)
@@ -57,7 +63,7 @@ class Predicate:
             else: # constants are always the same object
                 new_args.append(arg)
         return Predicate(self.name, new_args, None)
-    
+        
     # remove itself from the clause
     def remove_self(self):
         self.prev.next = self.next
@@ -207,7 +213,7 @@ def std_var_in_pred(pred, name_gen, map):
         if l[i].type == 'var':
             if l[i].value not in map:               
                 map[l[i].value] = l[i]
-                print('std var: new pair added ', map)
+#                 print('std var: new pair added ', map)
                 l[i].value = next(name_gen)
             else: 
                 l[i] = map[l[i].value]
@@ -226,12 +232,19 @@ def subst(s, clause):
 ########################### Resolution ###########################
 def ask(kb, a):
     na = negate_name(a.name)
+    print(na)
     for pred in kb[na]:
-        var_name_gen = var_name_generator()
-        std_var_in_clause(pred.head, var_name_gen, {})
         print_clause(pred.head)
-        sub = unify(a.args, pred.args, {})
+        if unify(a.args, pred.args, {}) is None:
+            continue        
+        var_name_gen = var_name_generator()
+        to_resolve, to_unify = pred.head.copy(pred) # clause and the term
+        std_var_in_clause(to_resolve, var_name_gen, {})
+        print_clause(to_resolve)
+        sub = unify(a.args, to_unify.args, {})
         print_subst(sub)
+        subst(sub, to_resolve)
+        print_clause(to_resolve)
 
 def negate_name(name):
     if name[0] == '-':
@@ -241,6 +254,7 @@ def negate_name(name):
 
 # walk the clause through the kb
 # def resolution(kb, clause):
+    
     
         
     
@@ -268,7 +282,8 @@ def print_clause(head):
     head = head.next
     while head:
         head.print()
-        print('<c' + str(head.head.num) + '>', end='')
+        if DEBUG:
+            print('<c' + str(head.head.num) + '>', end='')
         if DEBUG:
             print ( '(' + str(id(head) % 1000) + ')', end='' )
         print (' -> ',end='')
@@ -285,13 +300,19 @@ def print_subst(s):
         for var, val in s.items():
             # assert var.type == 'var'
 #             assert val.type == 'const'
-            print(var.value + '/' + val.value + ', ', end='')
+            print(var.value, end='')
+            if DEBUG: print('<' + str(id(var) % 1000) + '>', end='')
+            print('/', end='')
+            print(val.value,end='')
+            if DEBUG: print('<' + str(id(val) % 1000) + '>', end='')
+            print(', ', end='')
         print('%c%c }' % (8, 8))
     else: print('{ }')
 
 def traver_kb(kb):
     for k, v in kb.items():
         print ('PREDICATE: ' + k)
+        if DEBUG: print(v)
         for pred in v:
             print_clause(pred.head)
         print()
@@ -311,9 +332,6 @@ Father(Charley,Billy)
 ~Parent(x,y) | Ancestor(x,y)
 ~(Parent(x,y) & Ancestor(y,z)) | Ancestor(x,z)'''
 
-q = '''A      (Bo      b)
-       (A(x, y)    =     > B    (   z))
-       Mo      t   her(x,y)'''
 
 # lines = q.splitlines()
 # 
@@ -321,23 +339,25 @@ q = '''A      (Bo      b)
 #     l = line.replace(' ', '')
 #     tell(KB, l)
 
-# with open('input.txt', 'r') as f:
-#     lines = f.read().splitlines()
-#     
-#     num_query = int(lines[0])
-#     num_kb = int(lines[num_query + 1])
-#     kb_start = num_query + 2
-#     
-#     parse_KB(KB, lines[kb_start:kb_start+num_kb])
-#     
-# #     traver_kb(KB)
-#     
-#     for query_line in lines[1:num_query + 1]:
-#         query = parse_query(query_line)
-#         query.print()
-#         print(':')
-#         ask(KB,query)
-#         print()
+with open('input.txt', 'r') as f:
+    lines = f.read().splitlines()
+    
+    num_query = int(lines[0])
+    num_kb = int(lines[num_query + 1])
+    kb_start = num_query + 2
+    
+    parse_KB(KB, lines[kb_start:kb_start+num_kb])
+    
+    print('--------------KB----------------')
+    traver_kb(KB)
+    
+    print('--------------Query----------------')
+    for query_line in lines[1:num_query + 1]:
+        query = parse_query(query_line)
+        query.print()
+        print(':')
+        ask(KB,query)
+        print()
     
 
 
