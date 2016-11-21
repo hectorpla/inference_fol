@@ -239,10 +239,12 @@ def ask(kb, a):
         if unify(a.args, pred.args, {}) is None:
             continue                
         to_resolve, to_unify = pred.head.copy(pred) # clause and the term
-        resolve_clause_and_term(to_resolve, to_unify, a)
-        if to_resolve.next == None: return True
-        else:
-            return resolution(kb, to_resolve)
+        var_name_gen = var_name_generator()
+        resolve_clause_and_term(to_resolve, to_unify, a, var_name_gen)
+        if to_resolve.next == None:
+            return True
+        elif resolution(kb, to_resolve):
+            return True
     return False
 
 ##
@@ -250,10 +252,8 @@ def ask(kb, a):
 #  unify the list of to_unify and alpha, remove to_unify from to_resolve 
 #  substitute the clause to_resolve
 ##
-def resolve_clause_and_term(to_resolve, to_unify, alpha):
-    var_name_gen = var_name_generator()
-    
-    std_var_in_clause(to_resolve, var_name_gen, {})
+def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):    
+    std_var_in_clause(to_resolve, name_gen, {})
     print_clause(to_resolve) #
     sub = unify(alpha.args, to_unify.args, {})
     print_subst(sub) #
@@ -262,35 +262,43 @@ def resolve_clause_and_term(to_resolve, to_unify, alpha):
     print_clause(to_resolve) #
     print()
 
+rec_count = itertools.count()
+# walk the clause through the kb
+def resolution(kb, clause):
+    cnt = next(rec_count)
+    if cnt == 20:
+        return
+        
+    term = clause.next
+    if not term:
+        return True
+    
+    nt = negate_name(term.name)
+    is_resolvable = False
+    for pred in kb[nt]:
+        if unify(term.args, pred.args, {}) is None:
+            continue
+            
+        is_resolvable = True
+        new_clause, new_term = clause.copy(term) # copy from the clause    
+        to_resolve, to_unify = pred.head.copy(pred) # copy from the KB
+        var_name_gen = var_name_generator()        
+        resolve_clause_and_term(to_resolve, to_unify, new_term, var_name_gen)
+        resolve_clause_and_term(new_clause, new_term, to_unify, var_name_gen)
+        new_clause.merge_with(to_resolve)
+        # recursively solve it        
+        if resolution(kb, new_clause):
+            return True
+    if not is_resolvable:
+        return False
+
+
 def negate_name(name):
     if name[0] == '-':
         return name[1:]
     else:
-        return '-' + name
-
-# walk the clause through the kb
-def resolution(kb, clause):
-    term = clause.next
-    while term:
-        nt = negate_name(term.name)
-        is_resolvable = False
-        for pred in kb[nt]:
-            if unify(term.args, pred.args, {}) is None:
-                continue
-            is_resolvable = True           
-            to_resolve, to_unify = pred.head.copy(pred)
-            resolve_clause_and_term(to_resolve, to_unify, term)
-            # recursively solve it
-            new_clause = to_resolve.copy()
-            if resolution(kb, new_clause):
-                return True
-        if not is_resolvable:
-            return False
-        term = term.next
-    return True
-        
+        return '-' + name    
     
-
 ########################### Utilites ###########################
 def var_name_generator():
     name_tab = ['x', 'y', 'z', 'w', 'p', 'q']
