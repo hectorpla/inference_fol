@@ -39,8 +39,9 @@ class Clause:
         cur, tail = self, None
         while cur:
             tail, cur = cur, cur.next
-        tail.next = rhs.next   
-        rhs.next.prev = tail 
+        tail.next = rhs.next
+        if rhs.next:
+            rhs.next.prev = tail 
     
     def print(self):
         print('CLAUSE ' + str(self.num) , end='')
@@ -182,7 +183,7 @@ def unify(x, y, s):
         if x.value == y.value:
             return s
         else:
-            print('different contants: unification failed')
+            print('unify: different contants, unification failed')
             return None
     else:
         return None
@@ -254,8 +255,12 @@ def ask(kb, a):
 ##
 def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):    
     std_var_in_clause(to_resolve, name_gen, {})
+    print ('unifying: term ', end='')
+    alpha.print()
+    print (' and clause ', end='')
     print_clause(to_resolve) #
-    sub = unify(alpha.args, to_unify.args, {})
+    print ('---')
+    sub = unify(to_unify.args, alpha.args, {}) # first two args order matters?
     print_subst(sub) #
     to_unify.remove_self()
     subst(sub, to_resolve)
@@ -267,9 +272,10 @@ rec_count = itertools.count()
 def resolution(kb, clause):
     cnt = next(rec_count)
     if cnt == 20:
-        return
+        quit()
         
     term = clause.next
+    # no term left
     if not term:
         return True
     
@@ -277,15 +283,23 @@ def resolution(kb, clause):
     is_resolvable = False
     for pred in kb[nt]:
         if unify(term.args, pred.args, {}) is None:
+            print('failed terms: ', end='')
+            term.print(); print('   -   '); pred.print()
+            print('\n')
             continue
             
         is_resolvable = True
+        print('-- about to unify two clauses --')
         new_clause, new_term = clause.copy(term) # copy from the clause    
         to_resolve, to_unify = pred.head.copy(pred) # copy from the KB
         var_name_gen = var_name_generator()        
         resolve_clause_and_term(to_resolve, to_unify, new_term, var_name_gen)
-        resolve_clause_and_term(new_clause, new_term, to_unify, var_name_gen)
+        # resolve_clause_and_term(new_clause, new_term, to_unify, var_name_gen)
+        new_term.remove_self()
         new_clause.merge_with(to_resolve)
+        print('-- after unifying two clauses --')
+        print_clause(new_clause)
+        print()
         # recursively solve it        
         if resolution(kb, new_clause):
             return True
