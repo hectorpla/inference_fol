@@ -28,7 +28,10 @@ class Clause:
             cur.prev, cur.head = temp, head
             temp.next = cur  
             cur_origin = cur_origin.next
-        return head, pred
+        if pred:
+            return head, pred
+        else:
+            return head
     
     def merge_with(self, rhs):
         assert isinstance(rhs, Clause)
@@ -231,20 +234,33 @@ def subst(s, clause):
         cur = cur.next
 ########################### Resolution ###########################
 def ask(kb, a):
-    na = negate_name(a.name)
-    print(na)
-    for pred in kb[na]:
-        print_clause(pred.head)
+    for pred in kb[a.name]:
+#         print_clause(pred.head)
         if unify(a.args, pred.args, {}) is None:
-            continue        
-        var_name_gen = var_name_generator()
+            continue                
         to_resolve, to_unify = pred.head.copy(pred) # clause and the term
-        std_var_in_clause(to_resolve, var_name_gen, {})
-        print_clause(to_resolve)
-        sub = unify(a.args, to_unify.args, {})
-        print_subst(sub)
-        subst(sub, to_resolve)
-        print_clause(to_resolve)
+        resolve_clause_and_term(to_resolve, to_unify, a)
+        if to_resolve.next == None: return True
+        else:
+            return resolution(kb, to_resolve)
+    return False
+
+##
+#  precondition: to_unify and ~alpha are resolvable
+#  unify the list of to_unify and alpha, remove to_unify from to_resolve 
+#  substitute the clause to_resolve
+##
+def resolve_clause_and_term(to_resolve, to_unify, alpha):
+    var_name_gen = var_name_generator()
+    
+    std_var_in_clause(to_resolve, var_name_gen, {})
+    print_clause(to_resolve) #
+    sub = unify(alpha.args, to_unify.args, {})
+    print_subst(sub) #
+    to_unify.remove_self()
+    subst(sub, to_resolve)
+    print_clause(to_resolve) #
+    print()
 
 def negate_name(name):
     if name[0] == '-':
@@ -253,9 +269,25 @@ def negate_name(name):
         return '-' + name
 
 # walk the clause through the kb
-# def resolution(kb, clause):
-    
-    
+def resolution(kb, clause):
+    term = clause.next
+    while term:
+        nt = negate_name(term.name)
+        is_resolvable = False
+        for pred in kb[nt]:
+            if unify(term.args, pred.args, {}) is None:
+                continue
+            is_resolvable = True           
+            to_resolve, to_unify = pred.head.copy(pred)
+            resolve_clause_and_term(to_resolve, to_unify, term)
+            # recursively solve it
+            new_clause = to_resolve.copy()
+            if resolution(kb, new_clause):
+                return True
+        if not is_resolvable:
+            return False
+        term = term.next
+    return True
         
     
 
@@ -356,7 +388,10 @@ with open('input.txt', 'r') as f:
         query = parse_query(query_line)
         query.print()
         print(':')
-        ask(KB,query)
+        if ask(KB,query):
+            print('**************True**************')
+        else:
+            print('**************False**************')
         print()
     
 
