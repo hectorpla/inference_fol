@@ -255,7 +255,7 @@ def ask(kb, a):
 ##
 def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):    
     std_var_in_clause(to_resolve, name_gen, {})
-    print ('unifying: term ', end='')
+    print ('---unifying: term ', end='')
     alpha.print()
     print (' and clause ', end='')
     print_clause(to_resolve) #
@@ -266,12 +266,14 @@ def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):
     subst(sub, to_resolve)
     print_clause(to_resolve) #
     print()
+    return sub
 
 rec_count = itertools.count()
 # walk the clause through the kb
 def resolution(kb, clause):
     cnt = next(rec_count)
-    if cnt == 20:
+    if cnt == 100:
+        print('@@@@@@@@@@@@ RECURSION END @@@@@@@@@@@@')
         quit()
         
     term = clause.next
@@ -284,7 +286,7 @@ def resolution(kb, clause):
     for pred in kb[nt]:
         if unify(term.args, pred.args, {}) is None:
             print('failed terms: ', end='')
-            term.print(); print('   -   '); pred.print()
+            term.print(); print('   -   ', end=''); pred.print()
             print('\n')
             continue
             
@@ -292,10 +294,12 @@ def resolution(kb, clause):
         print('-- about to unify two clauses --')
         new_clause, new_term = clause.copy(term) # copy from the clause    
         to_resolve, to_unify = pred.head.copy(pred) # copy from the KB
-        var_name_gen = var_name_generator()        
-        resolve_clause_and_term(to_resolve, to_unify, new_term, var_name_gen)
-        # resolve_clause_and_term(new_clause, new_term, to_unify, var_name_gen)
+        var_name_gen = var_name_generator()
+        
+        std_var_in_clause(new_clause, var_name_gen, {})
+        s = resolve_clause_and_term(to_resolve, to_unify, new_term, var_name_gen)
         new_term.remove_self()
+        subst(s, new_clause)
         new_clause.merge_with(to_resolve)
         print('-- after unifying two clauses --')
         print_clause(new_clause)
