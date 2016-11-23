@@ -246,7 +246,7 @@ def ask(kb, a):
         resolve_clause_and_term(to_resolve, to_unify, a, var_name_gen)
         if to_resolve.next == None:
             return True
-        elif resolution(kb, to_resolve):
+        elif resolution(kb, to_resolve, set()):
             return True
     return False
 
@@ -272,16 +272,22 @@ def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):
 
 rec_count = itertools.count()
 # walk the clause through the kb
-def resolution(kb, clause):
+def resolution(kb, clause, met):
     cnt = next(rec_count)
     if cnt == 100:
         print('@@@@@@@@@@@@ RECURSION END @@@@@@@@@@@@')
         quit()
         
-    term = clause.next
-    # no term left
-    if not term:
+    term = clause.next    
+    if not term: # no term left, implying empty clause
         return True
+    pred_id = predicate_to_tuple(term) # a representation to identify a predicate
+    if pred_id:
+        if pred_id in met:
+            
+            return False
+        else:
+            met.add(pred_id)        
     
     nt = negate_name(term.name)
     if nt not in kb:
@@ -309,7 +315,7 @@ def resolution(kb, clause):
         print_clause(new_clause)
         print()
         # recursively solve it        
-        if resolution(kb, new_clause):
+        if resolution(kb, new_clause, met):
             return True
     if not is_resolvable:
         return False
@@ -322,6 +328,35 @@ def negate_name(name):
         return '-' + name    
     
 ########################### Utilites ###########################
+# change a predicate to a hashable representation
+def predicate_to_tuple(pred):
+    assert isinstance(pred, Predicate)
+    
+    l = []
+    count = 0
+    
+    l.append(pred.name)
+    for arg in pred.args:
+        if arg.type == 'var':
+            l.append('v')
+        else:
+            count = count + 1
+            l.append(arg)
+    if count:
+        print('$$$$$' + str(tuple(l)) + '$$$$$')
+        return tuple(l)
+    else:
+        return None
+
+def print_pred_id(pred_id):
+    print('PREDICATE ID: ')
+    for e in pred_id:
+        if isinstance(e, str)
+            print(e, end='')
+        elif e.type == 'const':
+            e.nprint()
+    print()
+
 def var_name_generator():
     name_tab = ['x', 'y', 'z', 'w', 'p', 'q']
     counter = itertools.count(1)
