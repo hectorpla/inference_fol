@@ -235,6 +235,8 @@ def subst(s, clause):
         cur = cur.next
 ########################### Resolution ###########################
 def ask(kb, a):
+    if a.name not in kb:
+        return False
     for pred in kb[a.name]:
 #         print_clause(pred.head)
         if unify(a.args, pred.args, {}) is None:
@@ -282,6 +284,8 @@ def resolution(kb, clause):
         return True
     
     nt = negate_name(term.name)
+    if nt not in kb:
+        return False
     is_resolvable = False
     for pred in kb[nt]:
         if unify(term.args, pred.args, {}) is None:
@@ -381,21 +385,16 @@ def parse_KB(kb, lines):
     
 ########################### main ###########################
 
-w = ''' (A(x) => B(x)) & (B(x) => C(x)) '''
-
-m = '''Mother(Liz,Charley)
-Father(Charley,Billy)
-~Mother(x,y) | Parent(x,y)
-~Father(x,y) | Parent(x,y)
-~Parent(x,y) | Ancestor(x,y)
-~(Parent(x,y) & Ancestor(y,z)) | Ancestor(x,z)'''
-
-
 # lines = q.splitlines()
 # 
 # for line in lines:
 #     l = line.replace(' ', '')
 #     tell(KB, l)
+
+out = open('output.txt', 'w')
+if not out:
+    print('failed opening output.txt')
+    quit()
 
 with open('input.txt', 'r') as f:
     lines = f.read().splitlines()
@@ -416,12 +415,10 @@ with open('input.txt', 'r') as f:
         print(':')
         if ask(KB,query):
             print('**************True**************')
+            out.write('TRUE\n')
         else:
             print('**************False**************')
+            out.write('FALSE\n')
         print()
     
-
-
-
-
-
+out.close()
