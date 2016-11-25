@@ -274,21 +274,33 @@ rec_count = itertools.count()
 # walk the clause through the kb
 def resolution(kb, clause, met):
     cnt = next(rec_count)
-    if cnt == 100:
+    if cnt == 200:
         print('@@@@@@@@@@@@ RECURSION END @@@@@@@@@@@@')
         quit()
         
     term = clause.next    
     if not term: # no term left, implying empty clause
         return True
-    pred_id = predicate_to_tuple(term) # a representation to identify a predicate
-    if pred_id:
-        if pred_id in met:
-            
-            return False
-        else:
-            met.add(pred_id)        
+        
+        # prevent loop from predicate perspective
+#     pred_id = predicate_to_tuple(term) # a representation to identify a predicate
+#     if pred_id:
+#         if pred_id in met:
+#             print('*** Predicate Met again ***')
+#             print_pred_id(pred_id); print()
+#             return False
+#         else:
+#             met.add(pred_id)
     
+    # prevent loop from clause perspective
+    clause_id = clause_to_tuple(clause)
+    if clause_id in met:
+        print('*** Clause Met again ***')
+        return False        
+    else:
+        print ('%%%%%% clause put into map %%%%%%')
+        met.add(clause_id) ##
+
     nt = negate_name(term.name)
     if nt not in kb:
         return False
@@ -314,12 +326,14 @@ def resolution(kb, clause, met):
         print('-- after unifying two clauses --')
         print_clause(new_clause)
         print()
+#         met.add(clause_id) ##
         # recursively solve it        
         if resolution(kb, new_clause, met):
             return True
+#         met.remove(clause_id) ##
     if not is_resolvable:
         return False
-
+    
 
 def negate_name(name):
     if name[0] == '-':
@@ -328,6 +342,20 @@ def negate_name(name):
         return '-' + name    
     
 ########################### Utilites ###########################
+# change a clause to a hashable representation
+# not so efficient
+def clause_to_tuple(clause):
+    assert isinstance(clause, Clause)
+    
+    cur = clause.next
+    l = []
+    
+    while cur:
+        l.append(predicate_to_tuple(cur))
+        cur = cur.next
+    
+    return tuple(l)
+
 # change a predicate to a hashable representation
 def predicate_to_tuple(pred):
     assert isinstance(pred, Predicate)
@@ -342,19 +370,20 @@ def predicate_to_tuple(pred):
         else:
             count = count + 1
             l.append(arg)
-    if count:
-        print('$$$$$' + str(tuple(l)) + '$$$$$')
-        return tuple(l)
-    else:
-        return None
+    # if count:
+#         print('$$$$$' + str(tuple(l)) + '$$$$$')
+    return tuple(l)
+    # else:
+#         return None
 
 def print_pred_id(pred_id):
     print('PREDICATE ID: ')
     for e in pred_id:
-        if isinstance(e, str)
+        if isinstance(e, str):
             print(e, end='')
         elif e.type == 'const':
             e.nprint()
+        print(' ', end='')
     print()
 
 def var_name_generator():
