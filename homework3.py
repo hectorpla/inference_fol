@@ -183,7 +183,7 @@ def unify(x, y, s):
         if x.value == y.value:
             return s
         else:
-            print('unify: different contants, unification failed')
+#             print('unify: different contants, unification failed')
             return None
     else:
         return None
@@ -257,27 +257,21 @@ def ask(kb, a):
 ##
 def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):    
     std_var_in_clause(to_resolve, name_gen, {})
-    print ('---unifying: term ', end='')
-    alpha.print()
-    print (' and clause ', end='')
-    print_clause(to_resolve) #
-    print ('---')
+#     print ('---unifying: term ', end='')
+#     alpha.print()
+#     print (' and clause ', end='')
+#     print_clause(to_resolve) #
+#     print ('---')
     sub = unify(to_unify.args, alpha.args, {}) # first two args order matters?
-    print_subst(sub) #
+#     print_subst(sub) #
     to_unify.remove_self()
     subst(sub, to_resolve)
-    print_clause(to_resolve) #
-    print()
+#     print_clause(to_resolve) #
+#     print()
     return sub
 
-rec_count = itertools.count()
 # walk the clause through the kb
 def resolution(kb, clause, met):
-    cnt = next(rec_count)
-    if cnt == 200:
-        print('@@@@@@@@@@@@ RECURSION END @@@@@@@@@@@@')
-        quit()
-        
     term = clause.next    
     if not term: # no term left, implying empty clause
         return True
@@ -295,10 +289,10 @@ def resolution(kb, clause, met):
     # prevent loop from clause perspective
     clause_id = clause_to_tuple(clause)
     if clause_id in met:
-        print('*** Clause Met again ***')
+#         print('*** Clause Met again ***')
         return False        
     else:
-        print ('%%%%%% clause put into map %%%%%%')
+#         print ('%%%%%% clause put into map %%%%%%')
         met.add(clause_id) ##
 
     nt = negate_name(term.name)
@@ -307,13 +301,13 @@ def resolution(kb, clause, met):
     is_resolvable = False
     for pred in kb[nt]:
         if unify(term.args, pred.args, {}) is None:
-            print('failed terms: ', end='')
-            term.print(); print('   -   ', end=''); pred.print()
-            print('\n')
+#             print('failed terms: ', end='')
+#             term.print(); print('   -   ', end=''); pred.print()
+#             print('\n')
             continue
             
         is_resolvable = True
-        print('-- about to unify two clauses --')
+#         print('-- about to unify two clauses --')
         new_clause, new_term = clause.copy(term) # copy from the clause    
         to_resolve, to_unify = pred.head.copy(pred) # copy from the KB
         var_name_gen = var_name_generator()
@@ -323,14 +317,12 @@ def resolution(kb, clause, met):
         new_term.remove_self()
         subst(s, new_clause)
         new_clause.merge_with(to_resolve)
-        print('-- after unifying two clauses --')
-        print_clause(new_clause)
-        print()
-#         met.add(clause_id) ##
+#         print('-- after unifying two clauses --')
+#         print_clause(new_clause)
+#         print()
         # recursively solve it        
         if resolution(kb, new_clause, met):
             return True
-#         met.remove(clause_id) ##
     if not is_resolvable:
         return False
     
@@ -469,8 +461,8 @@ with open('input.txt', 'r') as f:
     
     parse_KB(KB, lines[kb_start:kb_start+num_kb])
     
-    print('--------------KB----------------')
-    traver_kb(KB)
+#     print('--------------KB----------------')
+#     traver_kb(KB)
     
     print('--------------Query----------------')
     for query_line in lines[1:num_query + 1]:
