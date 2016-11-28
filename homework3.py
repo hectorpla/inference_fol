@@ -78,7 +78,7 @@ class Predicate:
         print('[' + self.name + ': ', end='')
         for child in self.args:
             child.nprint(DEBUG), print(' ', end='')
-        print('%c]' % 8, end='')
+        print(']', end='')
 
 ##
 # a dictionary to store clauses in different bucket with respect to
@@ -183,7 +183,7 @@ def unify(x, y, s):
         if x.value == y.value:
             return s
         else:
-#             print('unify: different contants, unification failed')
+            print('unify: different contants, unification failed')
             return None
     else:
         return None
@@ -257,17 +257,17 @@ def ask(kb, a):
 ##
 def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):    
     std_var_in_clause(to_resolve, name_gen, {})
-#     print ('---unifying: term ', end='')
-#     alpha.print()
-#     print (' and clause ', end='')
-#     print_clause(to_resolve) #
-#     print ('---')
+    print ('---unifying: term ', end='')
+    alpha.print()
+    print (' and clause ', end='')
+    print_clause(to_resolve) #
+    print ('---')
     sub = unify(to_unify.args, alpha.args, {}) # first two args order matters?
-#     print_subst(sub) #
+    print_subst(sub) #
     to_unify.remove_self()
     subst(sub, to_resolve)
-#     print_clause(to_resolve) #
-#     print()
+    print_clause(to_resolve) #
+    print()
     return sub
 
 # walk the clause through the kb
@@ -289,10 +289,11 @@ def resolution(kb, clause, met):
     # prevent loop from clause perspective
     clause_id = clause_to_tuple(clause)
     if clause_id in met:
-#         print('*** Clause Met again ***')
+        print('*** Clause Met again ***')
         return False        
     else:
-#         print ('%%%%%% clause put into map %%%%%%')
+        print ('%%%%%% clause put into map %%%%%%')
+        print_clause_id(clause_id)
         met.add(clause_id) ##
 
     nt = negate_name(term.name)
@@ -307,7 +308,7 @@ def resolution(kb, clause, met):
             continue
             
         is_resolvable = True
-#         print('-- about to unify two clauses --')
+        print('-- about to unify two clauses --')
         new_clause, new_term = clause.copy(term) # copy from the clause    
         to_resolve, to_unify = pred.head.copy(pred) # copy from the KB
         var_name_gen = var_name_generator()
@@ -317,9 +318,9 @@ def resolution(kb, clause, met):
         new_term.remove_self()
         subst(s, new_clause)
         new_clause.merge_with(to_resolve)
-#         print('-- after unifying two clauses --')
-#         print_clause(new_clause)
-#         print()
+        print('-- after unifying two clauses --')
+        print_clause(new_clause)
+        print()
         # recursively solve it        
         if resolution(kb, new_clause, met):
             return True
@@ -368,15 +369,23 @@ def predicate_to_tuple(pred):
     # else:
 #         return None
 
-def print_pred_id(pred_id):
-    print('PREDICATE ID: ')
+def print_clause_id(clause_id):
+    for pred in clause_id:
+        print_pred_id(pred, True)
+        print(' | ', end='')
+    print()
+
+def print_pred_id(pred_id, for_clause=False):
+    if not for_clause:
+        print('PREDICATE ID: ')
     for e in pred_id:
         if isinstance(e, str):
             print(e, end='')
         elif e.type == 'const':
             e.nprint()
         print(' ', end='')
-    print()
+    if not for_clause:
+        print()
 
 def var_name_generator():
     name_tab = ['x', 'y', 'z', 'w', 'p', 'q']
@@ -461,8 +470,8 @@ with open('input.txt', 'r') as f:
     
     parse_KB(KB, lines[kb_start:kb_start+num_kb])
     
-#     print('--------------KB----------------')
-#     traver_kb(KB)
+    print('--------------KB----------------')
+    traver_kb(KB)
     
     print('--------------Query----------------')
     for query_line in lines[1:num_query + 1]:
