@@ -155,19 +155,29 @@ def tell(kb, line, s):
             
     return clause_l # an interface to test
 
+##
 # In the phase of constructing KB 
 # scan the argument list of a Predicate, substitue the object if already in map,
 # or otherwise map the constant name with the first occurred object
-def map_and_sub_const(pred, map):
+# update: even variable with the same name in a predicate should refer to the same object
+##
+def map_and_sub_const(pred, const_map):
     assert isinstance(pred, Predicate)
     
+    var_map = {} # local (only in a specific predicate)
     args = pred.args
+    
     for i in range(len(args)):
         if args[i].type == 'const':
-            if args[i].value in map:
-                args[i] = map[args[i].value]
+            if args[i].value in const_map:
+                args[i] = const_map[args[i].value]
             else:                
-                map[args[i].value] = args[i]
+                const_map[args[i].value] = args[i]
+        elif args[i].type == 'var':
+            if args[i].value in var_map:
+                args[i] = var_map[args[i].value]
+            else:                
+                var_map[args[i].value] = args[i]
                 
 # due to specified form of the queries
 # directly return the Predicate
@@ -324,12 +334,13 @@ def resolution(kb, clause, met):
         return False
     is_resolvable = False
     for pred in kb[nt]:
-        if unify(term.args, pred.args, {}) is None:
+        ss = unify(term.args, pred.args, {})
+        if ss is None:
 #             print('failed terms: ', end='')
 #             term.print(); print('   -   ', end=''); pred.print()
 #             print('\n')
             continue
-            
+        print_subst(ss)
         is_resolvable = True
         print('-- about to unify two clauses --')
         new_clause, new_term = clause.copy(term) # copy from the clause    
