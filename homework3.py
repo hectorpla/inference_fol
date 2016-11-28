@@ -171,10 +171,12 @@ def map_and_sub_const(pred, map):
                 
 # due to specified form of the queries
 # directly return the Predicate
-def parse_query(line):
+def parse_query(line, s):
     line = line.replace(' ', '')
     start = lp.parse_sentence(line)
-    return convert_to_pred(start.left, None)
+    query_pred = convert_to_pred(start.left, None)
+    map_and_sub_const(query_pred, s)
+    return query_pred
             
 ########################### Uinification ###########################
 def unify(x, y, s):
@@ -488,6 +490,7 @@ def parse_KB(kb, lines):
     sub = {}
     for line in lines:
         tell(kb, line, sub)
+    return sub # pass to parse_query()
     
 ########################### main ###########################
 
@@ -509,22 +512,22 @@ with open('input.txt', 'r') as f:
     num_kb = int(lines[num_query + 1])
     kb_start = num_query + 2
     
-    parse_KB(KB, lines[kb_start:kb_start+num_kb])
+    sub = parse_KB(KB, lines[kb_start:kb_start+num_kb])
     
     print('--------------KB----------------')
     traver_kb(KB)
     
-    # print('--------------Query----------------')
-#     for query_line in lines[1:num_query + 1]:
-#         query = parse_query(query_line)
-#         query.print()
-#         print(':')
-#         if ask(KB,query):
-#             print('**************True**************')
-#             out.write('TRUE\n')
-#         else:
-#             print('**************False**************')
-#             out.write('FALSE\n')
-#         print()
+    print('--------------Query----------------')
+    for query_line in lines[1:num_query + 1]:
+        query = parse_query(query_line, sub)
+        query.print()
+        print(':')
+        if ask(KB,query):
+            print('**************True**************')
+            out.write('TRUE\n')
+        else:
+            print('**************False**************')
+            out.write('FALSE\n')
+        print()
     
 out.close()
