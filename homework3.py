@@ -78,7 +78,7 @@ class Predicate:
         print('[' + self.name + ': ', end='')
         for child in self.args:
             child.nprint(DEBUG), print(' ', end='')
-        print('%c]' % 8, end='')
+        print(']', end='')
 
 ##
 # a dictionary to store clauses in different bucket with respect to
@@ -276,14 +276,8 @@ def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):
     print()
     return sub
 
-rec_count = itertools.count()
 # walk the clause through the kb
 def resolution(kb, clause, met):
-    cnt = next(rec_count)
-    if cnt == 200:
-        print('@@@@@@@@@@@@ RECURSION END @@@@@@@@@@@@')
-        quit()
-        
     term = clause.next    
     if not term: # no term left, implying empty clause
         return True
@@ -305,6 +299,7 @@ def resolution(kb, clause, met):
         return False        
     else:
         print ('%%%%%% clause put into map %%%%%%')
+        print_clause_id(clause_id)
         met.add(clause_id) ##
 
     nt = negate_name(term.name)
@@ -313,9 +308,9 @@ def resolution(kb, clause, met):
     is_resolvable = False
     for pred in kb[nt]:
         if unify(term.args, pred.args, {}) is None:
-            print('failed terms: ', end='')
-            term.print(); print('   -   ', end=''); pred.print()
-            print('\n')
+#             print('failed terms: ', end='')
+#             term.print(); print('   -   ', end=''); pred.print()
+#             print('\n')
             continue
             
         is_resolvable = True
@@ -393,15 +388,23 @@ def predicate_to_tuple(pred):
     # else:
 #         return None
 
-def print_pred_id(pred_id):
-    print('PREDICATE ID: ')
+def print_clause_id(clause_id):
+    for pred in clause_id:
+        print_pred_id(pred, True)
+        print(' | ', end='')
+    print()
+
+def print_pred_id(pred_id, for_clause=False):
+    if not for_clause:
+        print('PREDICATE ID: ')
     for e in pred_id:
         if isinstance(e, str):
             print(e, end='')
         elif e.type == 'const':
             e.nprint()
         print(' ', end='')
-    print()
+    if not for_clause:
+        print()
 
 def var_name_generator():
     name_tab = ['x', 'y', 'z', 'w', 'p', 'q']
