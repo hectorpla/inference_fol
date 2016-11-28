@@ -131,7 +131,7 @@ def convert_to_clause_list(clause_root):
     return head
                     
 # tell a KB a sentence of FOL
-def tell(kb, line):
+def tell(kb, line, s):
     line = line.replace(' ', '')
     start = lp.parse_sentence(line)
     clauses = seperate_clauses(start.left)
@@ -146,14 +146,29 @@ def tell(kb, line):
         # store in KB
         cur = clause_l.next
         while cur:
+            # map and substitute constants
+            map_and_sub_const(cur, s)
             if cur.name not in kb:
                 kb[cur.name] = []
             kb[cur.name].append(cur)
             cur = cur.next
-
             
     return clause_l # an interface to test
 
+# In the phase of constructing KB 
+# scan the argument list of a Predicate, substitue the object if already in map,
+# or otherwise map the constant name with the first occurred object
+def map_and_sub_const(pred, map):
+    assert isinstance(pred, Predicate)
+    
+    args = pred.args
+    for i in range(len(args)):
+        if args[i].type == 'const':
+            if args[i].value in map:
+                args[i] = map[args[i].value]
+            else:                
+                map[args[i].value] = args[i]
+                
 # due to specified form of the queries
 # directly return the Predicate
 def parse_query(line):
@@ -352,7 +367,7 @@ def factor(clause):
             print_pred_id(pred_id)
             cur.remove_self()
             print_clause(clause)
-            print('///////////')
+            print('///////////\n')
         else:
             to_factor.add(pred_id)
         cur = cur.next
@@ -470,8 +485,9 @@ def traver_kb(kb):
         print()
 
 def parse_KB(kb, lines):
+    sub = {}
     for line in lines:
-        tell(kb, line)
+        tell(kb, line, sub)
     
 ########################### main ###########################
 
@@ -498,17 +514,17 @@ with open('input.txt', 'r') as f:
     print('--------------KB----------------')
     traver_kb(KB)
     
-    print('--------------Query----------------')
-    for query_line in lines[1:num_query + 1]:
-        query = parse_query(query_line)
-        query.print()
-        print(':')
-        if ask(KB,query):
-            print('**************True**************')
-            out.write('TRUE\n')
-        else:
-            print('**************False**************')
-            out.write('FALSE\n')
-        print()
+    # print('--------------Query----------------')
+#     for query_line in lines[1:num_query + 1]:
+#         query = parse_query(query_line)
+#         query.print()
+#         print(':')
+#         if ask(KB,query):
+#             print('**************True**************')
+#             out.write('TRUE\n')
+#         else:
+#             print('**************False**************')
+#             out.write('FALSE\n')
+#         print()
     
 out.close()
