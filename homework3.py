@@ -234,6 +234,12 @@ def subst(s, clause):
                 args[i] = s[args[i]]
         cur = cur.next
 ########################### Resolution ###########################
+def negate_name(name):
+    if name[0] == '-':
+        return name[1:]
+    else:
+        return '-' + name 
+
 def ask(kb, a):
     if a.name not in kb:
         return False
@@ -282,7 +288,7 @@ def resolution(kb, clause, met):
     if not term: # no term left, implying empty clause
         return True
         
-        # prevent loop from predicate perspective
+    # prevent loop from predicate perspective
 #     pred_id = predicate_to_tuple(term) # a representation to identify a predicate
 #     if pred_id:
 #         if pred_id in met:
@@ -323,23 +329,33 @@ def resolution(kb, clause, met):
         new_term.remove_self()
         subst(s, new_clause)
         new_clause.merge_with(to_resolve)
+        # do factoring
+        factor(new_clause)
         print('-- after unifying two clauses --')
         print_clause(new_clause)
         print()
-#         met.add(clause_id) ##
         # recursively solve it        
         if resolution(kb, new_clause, met):
             return True
-#         met.remove(clause_id) ##
     if not is_resolvable:
         return False
     
-
-def negate_name(name):
-    if name[0] == '-':
-        return name[1:]
-    else:
-        return '-' + name    
+# do factoring on a clause, (stand along function or make it a member of clause)
+def factor(clause):
+    assert isinstance(clause, Clause)
+    
+    to_factor = set()
+    
+    # first only cancel out the identical predicate
+    cur = clause.next
+    while cur:
+        pred_id = predicate_to_tuple(cur)
+        if pred_id in to_factor:
+            cur.remove_self()
+        else:
+            to_factor.add(pred_id)
+        cur = cur.next
+   
     
 ########################### Utilites ###########################
 # change a clause to a hashable representation
@@ -363,12 +379,13 @@ def predicate_to_tuple(pred):
     l = []
     count = 0
     
+    # might differentiate the predicate name from the arguments (by making itself a tuple)
     l.append(pred.name)
     for arg in pred.args:
         if arg.type == 'var':
             l.append('v')
         else:
-            count = count + 1
+            # count = count + 1
             l.append(arg)
     # if count:
 #         print('$$$$$' + str(tuple(l)) + '$$$$$')
