@@ -346,7 +346,13 @@ def factor(clause):
     while cur:
         pred_id = predicate_to_tuple(cur)
         if pred_id in to_factor:
+            print('///////////')
+            print_clause(clause)
+            print('IDENTICAL PRED: ', end='')
+            print_pred_id(pred_id)
             cur.remove_self()
+            print_clause(clause)
+            print('///////////')
         else:
             to_factor.add(pred_id)
         cur = cur.next
