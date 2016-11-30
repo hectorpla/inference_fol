@@ -262,6 +262,7 @@ def negate_name(name):
     else:
         return '-' + name 
 
+import time
 def ask(kb, a):
     if a.name not in kb:
         return False
@@ -272,9 +273,10 @@ def ask(kb, a):
         to_resolve, to_unify = pred.head.copy(pred) # clause and the term
         var_name_gen = var_name_generator()
         resolve_clause_and_term(to_resolve, to_unify, a, var_name_gen)
+        abort_time = time.time() + 0.5 # set timer for the task
         if to_resolve.next == None:
             return True
-        elif resolution(kb, to_resolve, set()):
+        elif resolution(kb, to_resolve, set(), 0, abort_time):
             return True
     return False
 
@@ -299,20 +301,14 @@ def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):
     return sub
 
 # walk the clause through the kb
-def resolution(kb, clause, met):
+def resolution(kb, clause, met, depth, abort):
+    print(time.time() > abort)
+    if depth > 500 or time.time() > abort:
+        return False
+
     term = clause.next    
     if not term: # no term left, implying empty clause
         return True
-        
-    # prevent loop from predicate perspective
-#     pred_id = predicate_to_tuple(term) # a representation to identify a predicate
-#     if pred_id:
-#         if pred_id in met:
-#             print('*** Predicate Met again ***')
-#             print_pred_id(pred_id); print()
-#             return False
-#         else:
-#             met.add(pred_id)
     
     # prevent loop from clause perspective
     clause_id = clause_to_tuple(clause)
@@ -353,7 +349,7 @@ def resolution(kb, clause, met):
 #         print_clause(new_clause)
 #         print()
         # recursively solve it        
-        if resolution(kb, new_clause, met):
+        if resolution(kb, new_clause, met, depth + 1, abort):
             return True
     if not is_resolvable:
         return False
@@ -521,13 +517,13 @@ with open('input.txt', 'r') as f:
     for query_line in lines[1:num_query + 1]:
         query = parse_query(query_line, sub)
 #         query.print()
-        print(':')
+#         print(':')
         if ask(KB,query):
 #             print('**************True**************')
             out.write('TRUE\n')
         else:
 #             print('**************False**************')
             out.write('FALSE\n')
-        print()
+#         print()
     
 out.close()
