@@ -345,6 +345,7 @@ def resolution(kb, clause, met):
         print_subst(ss)
         is_resolvable = True
         print('-- about to unify two clauses --')
+        # !! can use bactracking to improve space complexity !!
         new_clause, new_term = clause.copy(term) # copy from the clause    
         to_resolve, to_unify = pred.head.copy(pred) # copy from the KB
         var_name_gen = var_name_generator()
