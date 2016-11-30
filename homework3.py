@@ -273,7 +273,7 @@ def ask(kb, a):
         to_resolve, to_unify = pred.head.copy(pred) # clause and the term
         var_name_gen = var_name_generator()
         resolve_clause_and_term(to_resolve, to_unify, a, var_name_gen)
-        abort_time = time.time() + 0.5 # set timer for the task
+        abort_time = time.time() + 2 # set timer for the task
         if to_resolve.next == None:
             return True
         elif resolution(kb, to_resolve, set(), 0, abort_time):
@@ -302,7 +302,7 @@ def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):
 
 # walk the clause through the kb
 def resolution(kb, clause, met, depth, abort):
-    print(time.time() > abort)
+#     print(time.time() > abort)
     if depth > 500 or time.time() > abort:
         return False
 
