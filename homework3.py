@@ -135,15 +135,8 @@ def tell(kb, line, s):
     line = line.replace(' ', '')
     start = lp.parse_sentence(line)
     clauses = seperate_clauses(start.left)
-    for clause_t in clauses:
-        # print("tell clause : ")
-#         clause_t.nprint()
-#         print()
-        
+    for clause_t in clauses:  
         clause_l = convert_to_clause_list(clause_t)        
-        # print_clause(clause_l)
-#         print()
-        # store in KB
         cur = clause_l.next
         while cur:
             # map and substitute constants
@@ -210,7 +203,7 @@ def unify(x, y, s):
         if x.value == y.value:
             return s
         else:
-            print('unify: different contants, unification failed')
+#             print('unify: different contants, unification failed') #
             return None
     else:
         return None
@@ -292,17 +285,17 @@ def ask(kb, a):
 ##
 def resolve_clause_and_term(to_resolve, to_unify, alpha, name_gen):    
     std_var_in_clause(to_resolve, name_gen, {})
-    print ('---unifying: term ', end='')
-    alpha.print()
-    print (' and clause ', end='')
-    print_clause(to_resolve) #
-    print ('---')
+#     print ('---unifying: term ', end='')
+#     alpha.print()
+#     print (' and clause ', end='')
+#     print_clause(to_resolve) #
+#     print ('---')
     sub = unify(to_unify.args, alpha.args, {}) # first two args order matters?
-    print_subst(sub) #
+#     print_subst(sub) #
     to_unify.remove_self()
     subst(sub, to_resolve)
-    print_clause(to_resolve) #
-    print()
+#     print_clause(to_resolve) #
+#     print()
     return sub
 
 # walk the clause through the kb
@@ -324,11 +317,11 @@ def resolution(kb, clause, met):
     # prevent loop from clause perspective
     clause_id = clause_to_tuple(clause)
     if clause_id in met:
-        print('*** Clause Met again ***')
+#         print('*** Clause Met again ***')
         return False        
     else:
-        print ('%%%%%% clause put into map %%%%%%')
-        print_clause_id(clause_id)
+#         print ('%%%%%% clause put into map %%%%%%')
+#         print_clause_id(clause_id)
         met.add(clause_id) ##
 
     nt = negate_name(term.name)
@@ -342,9 +335,9 @@ def resolution(kb, clause, met):
 #             term.print(); print('   -   ', end=''); pred.print()
 #             print('\n')
             continue
-        print_subst(ss)
+#         print_subst(ss)
         is_resolvable = True
-        print('-- about to unify two clauses --')
+#         print('-- about to unify two clauses --')
         new_clause, new_term = clause.copy(term) # copy from the clause    
         to_resolve, to_unify = pred.head.copy(pred) # copy from the KB
         var_name_gen = var_name_generator()
@@ -356,9 +349,9 @@ def resolution(kb, clause, met):
         new_clause.merge_with(to_resolve)
         # do factoring
         factor(new_clause)
-        print('-- after unifying two clauses --')
-        print_clause(new_clause)
-        print()
+#         print('-- after unifying two clauses --')
+#         print_clause(new_clause)
+#         print()
         # recursively solve it        
         if resolution(kb, new_clause, met):
             return True
@@ -521,19 +514,19 @@ with open('input.txt', 'r') as f:
     
     sub = parse_KB(KB, lines[kb_start:kb_start+num_kb])
     
-    print('--------------KB----------------')
-    traver_kb(KB)
+    # print('--------------KB----------------')
+#     traver_kb(KB)
     
-    print('--------------Query----------------')
+#     print('--------------Query----------------')
     for query_line in lines[1:num_query + 1]:
         query = parse_query(query_line, sub)
-        query.print()
+#         query.print()
         print(':')
         if ask(KB,query):
-            print('**************True**************')
+#             print('**************True**************')
             out.write('TRUE\n')
         else:
-            print('**************False**************')
+#             print('**************False**************')
             out.write('FALSE\n')
         print()
     
