@@ -216,6 +216,7 @@ def unify(x, y, s):
         return None
 
 def unify_var(var, x, s):
+#     print('unifying ' + var.value)
     if var in s:
         return unify(s[var], x, s)
     elif x in s:
@@ -248,7 +249,8 @@ def std_var_in_pred(pred, name_gen, map):
                 l[i].value = next(name_gen)
             else: 
                 l[i] = map[l[i].value]
-    
+
+# substitue til the end
 def subst(s, clause):
     assert isinstance(clause, Clause)
     
@@ -256,7 +258,7 @@ def subst(s, clause):
     while cur:
         args = cur.args
         for i in range(len(args)):
-            if args[i] in s:
+            while args[i] in s: # just changed "if" to "while"
                 assert args[i].type == 'var'
                 args[i] = s[args[i]]
         cur = cur.next
@@ -374,13 +376,13 @@ def factor(clause):
     while cur:
         pred_id = predicate_to_tuple(cur)
         if pred_id in to_factor:
-            print('///////////')
-            print_clause(clause)
-            print('IDENTICAL PRED: ', end='')
-            print_pred_id(pred_id)
+            # print('///////////')
+#             print_clause(clause)
+#             print('IDENTICAL PRED: ', end='')
+#             print_pred_id(pred_id)
             cur.remove_self()
-            print_clause(clause)
-            print('///////////\n')
+            # print_clause(clause)
+#             print('///////////\n')
         else:
             to_factor.add(pred_id)
         cur = cur.next
@@ -504,12 +506,6 @@ def parse_KB(kb, lines):
     return sub # pass to parse_query()
     
 ########################### main ###########################
-
-# lines = q.splitlines()
-# 
-# for line in lines:
-#     l = line.replace(' ', '')
-#     tell(KB, l)
 
 out = open('output.txt', 'w')
 if not out:

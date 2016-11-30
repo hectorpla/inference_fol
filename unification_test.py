@@ -75,20 +75,28 @@ o = ''' A(x) | B(x)
         B(David)
         D(y) | C(x,y)
         C(x, Wenger)'''
+        
+# predicate with more than one i
+i = ''' B(x,x)
+        C(y,Bob) '''
 
-lines = o.splitlines()
+m = ''' C(y,Bob)
+        B(x,x)'''
+
+
+lines = m.splitlines()
 
 cls = []
 
 for line in lines:
     l = line.replace(' ', '')
     print(l)
-    cl = hw3.tell(hw3.KB, l)    
+    cl = hw3.tell(hw3.KB, l, {})    
     hw3.print_clause(cl)
     cls.append(cl)
 
 
-l = [cl.next.args for cl in cls]
+# l = [cl.next.args for cl in cls]
 
 
 for i in range(0, len(cls), 2):
@@ -99,7 +107,7 @@ for i in range(0, len(cls), 2):
     std_var_in_clause(cls[i+1], var_name_gen, {})
     hw3.print_clause(cls[i+1])
     
-    sub = hw3.unify(l[i],l[i+1], {})
+    sub = hw3.unify(cls[i].next.args,cls[i+1].next.args, {})
     hw3.print_subst(sub)
     
     hw3.subst(sub, cls[i])
