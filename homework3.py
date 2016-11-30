@@ -213,7 +213,7 @@ def unify_var(var, x, s):
     if var in s:
         return unify(s[var], x, s)
     elif x in s:
-        return unify(var, s[var], s)
+        return unify(var, s[x], s)
     # can a variable be unified with another variable
     else:
         s[var] = x
