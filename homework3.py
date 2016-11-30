@@ -220,7 +220,7 @@ def unify_var(var, x, s):
     if var in s:
         return unify(s[var], x, s)
     elif x in s:
-        return unify(var, s[var], s)
+        return unify(var, s[x], s)
     # can a variable be unified with another variable
     else:
         s[var] = x
@@ -310,16 +310,6 @@ def resolution(kb, clause, met):
     term = clause.next    
     if not term: # no term left, implying empty clause
         return True
-        
-    # prevent loop from predicate perspective
-#     pred_id = predicate_to_tuple(term) # a representation to identify a predicate
-#     if pred_id:
-#         if pred_id in met:
-#             print('*** Predicate Met again ***')
-#             print_pred_id(pred_id); print()
-#             return False
-#         else:
-#             met.add(pred_id)
     
     # prevent loop from clause perspective
     clause_id = clause_to_tuple(clause)
@@ -338,11 +328,7 @@ def resolution(kb, clause, met):
     for pred in kb[nt]:
         ss = unify(term.args, pred.args, {})
         if ss is None:
-#             print('failed terms: ', end='')
-#             term.print(); print('   -   ', end=''); pred.print()
-#             print('\n')
             continue
-        print_subst(ss)
         is_resolvable = True
         print('-- about to unify two clauses --')
         # !! can use bactracking to improve space complexity !!
@@ -355,38 +341,66 @@ def resolution(kb, clause, met):
         new_term.remove_self()
         subst(s, new_clause)
         new_clause.merge_with(to_resolve)
-        # do factoring
-        factor(new_clause)
-        print('-- after unifying two clauses --')
-        print_clause(new_clause)
-        print()
-        # recursively solve it        
-        if resolution(kb, new_clause, met):
-            return True
+        cancel_identicals(new_clause) # cancel out identicals
+        # do factoring, branch out again
+        branches = factor(new_clause)
+        for k, branch in enumerate(branches):
+            print('-- branching {0} --'.format(k))
+            print_clause(branch)
+            print()
+            # recursively solve it        
+            if resolution(kb, branch, met):
+                return True
     if not is_resolvable:
         return False
     
-# do factoring on a clause, (stand along function or make it a member of clause)
+# do factoring on a clause
 def factor(clause):
     assert isinstance(clause, Clause)
     
-    to_factor = set()
+    to_factor = { }
     
-    # first only cancel out the identical predicate
+    cur = clause.next
+    while cur:
+        if cur.name not in to_factor:
+            to_factor[cur.name] = []
+        to_factor[cur.name].append(cur)            
+        cur = cur.next
+        
+    branchings = []
+    for pred, bucket in to_factor.items():
+        for order, lhs in enumerate(bucket[:-1]):
+            for rhs in bucket[order+1:]:
+                if unify(lhs.args, rhs.args, {}) is None:
+                    continue
+                # slightly different from the resolution procedure (have only one clause)
+                new_clause, new_lhs = clause.copy(lhs) # copy the clause
+                
+                print ('++to unify ')
+                new_lhs.print(), print(' and ',end=''), rhs.print()
+                print(' in ', end=''), print_clause(new_clause)
+                sub = unify(new_lhs.args, rhs.args, {})
+                new_lhs.remove_self()
+                subst(sub, new_clause)
+                cancel_identicals(new_clause)
+                branchings.append(new_clause)
+    
+    if not branchings:
+        branchings.append(clause)   
+    return branchings
+
+def cancel_identicals(clause):
+    assert isinstance(clause, Clause)
+    
+    unique_ids = set()
     cur = clause.next
     while cur:
         pred_id = predicate_to_tuple(cur)
-        if pred_id in to_factor:
-            # print('///////////')
-#             print_clause(clause)
-#             print('IDENTICAL PRED: ', end='')
-#             print_pred_id(pred_id)
+        if pred_id in unique_ids:
             cur.remove_self()
-            # print_clause(clause)
-#             print('///////////\n')
         else:
-            to_factor.add(pred_id)
-        cur = cur.next
+            unique_ids.add(pred_id)          
+        cur = cur.next          
    
     
 ########################### Utilites ###########################
